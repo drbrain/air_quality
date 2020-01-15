@@ -70,13 +70,15 @@ class _cmds():
 class SGP30():
     def __init__(self,
                  bus,
-                 device_address=0x58,
-                 baseline_filename=BASELINE_FILENAME):
+                 device_address=0x58):
         self._bus = bus
         self._device_addr = device_address
-        self._start_time = time()
-        self._last_save_time = time()
-        self._baseline_filename = baseline_filename
+
+        self.iaq_init()
+
+        if self.read_features() >= 0x22:
+            tvoc_baseline = self.read_tvoc_inceptive_baseline()
+            self.write_tvoc_baseline(tvoc_baseline)
 
     def _generate_crc(self, data):
         def writable_value_with_crc(value):
@@ -142,9 +144,9 @@ class SGP30():
         return self._read_write(_cmds.GET_SERIAL_ID)
 
     def read_features(self):
-        return self._read_write(_cmds.GET_FEATURE_SET)
+        return self._read_write(_cmds.GET_FEATURE_SET)[0]
 
-    def init_sgp(self):
+    def iaq_init(self):
         self._read_write(_cmds.IAQ_INIT)
 
 class Crc8:
@@ -174,20 +176,10 @@ class Crc8:
 
 def main():
     with SMBus(1) as bus:
-        sgp = SGP30(bus, baseline_filename=BASELINE_FILENAME+".TESTING")
+        sgp = SGP30(bus)
 
         print("feature set: 0x{0:02x}".format(*sgp.read_features()))
         print("serial: 0x{0:04x}{1:04x}{2:04x}".format(*sgp.read_serial()))
-
-        sgp.init_sgp()
-
-        while(True):
-            eCO2, tVOC = sgp.read_measurements()
-
-            if eCO2 != 400 or tVOC != 0:
-                break;
-
-            sleep(1.0)
 
         while(True):
             eCO2, tVOC = sgp.read_measurements()
