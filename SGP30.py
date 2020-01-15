@@ -52,8 +52,6 @@ class _cmds():
         return cls.SGP30Cmd(cmd.commands +baseline_data, cmd.replylen, cmd.waittime)
 
 class SGP30():
-    SGP30Answer = namedtuple("SGP30Answer", ["data", "raw", "crc_ok"])
-
     def __init__(self,
                  bus,
                  device_address=0x58,
@@ -87,7 +85,7 @@ class SGP30():
             crc_ok, a = self._raw_validate_crc(r)
             answer = [i<<8 | j for i, j in a]
 
-            return self.SGP30Answer(answer, r, crc_ok)
+            return answer
 
     def store_baseline(self):
         with open(self._baseline_filename, "w") as conf:
@@ -162,13 +160,13 @@ def main():
     with SMBusWrapper(1) as bus:
         sgp = SGP30(bus, baseline_filename=BASELINE_FILENAME+".TESTING")
 
-        print("feature set: 0x{0:02x}".format(*sgp.read_features().data))
-        print("serial: 0x{0:04x}{1:04x}{2:04x}".format(*sgp.read_serial().data))
+        print("feature set: 0x{0:02x}".format(*sgp.read_features()))
+        print("serial: 0x{0:04x}{1:04x}{2:04x}".format(*sgp.read_serial()))
 
         sgp.init_sgp()
 
         while(True):
-            eCO2, tVOC = sgp.read_measurements().data
+            eCO2, tVOC = sgp.read_measurements()
 
             if eCO2 != 400 or tVOC != 0:
                 break;
@@ -176,7 +174,7 @@ def main():
             sleep(1.0)
 
         while(True):
-            eCO2, tVOC = sgp.read_measurements().data
+            eCO2, tVOC = sgp.read_measurements()
             print("eCO₂: {} tVOC: {}".format(eCO2, tVOC))
 
             sleep(1.0)
