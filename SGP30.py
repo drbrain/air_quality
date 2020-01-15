@@ -52,6 +52,14 @@ class _cmds():
     GET_SERIAL_ID               = SGP30Cmd([0x36, 0x82], 9, 10)
 
     @classmethod
+    def new_SET_ABSOLUTE_HUMIDITY(cls, data_with_crc):
+        cmd = cls.SET_ABSOLUTE_HUMIDITY
+
+        send = cmd.commands + data_with_crc
+
+        return cls.SGP30Cmd(send, cmd.replylen, cmd.waittime)
+
+    @classmethod
     def new_SET_IAQ_BASELINE(cls, data_with_crc):
         cmd = cls.SET_IAQ_BASELINE
 
@@ -97,6 +105,12 @@ class SGP30():
 
     def read_serial(self):
         return self._read_write(_cmds.GET_SERIAL_ID)
+
+    def write_absolute_humidity(self, absolute_humidity):
+        a_hum = [int(absolute_humidity * 256)]
+        a_hum_with_crc = self._generate_crc(a_hum)
+
+        self._read_write(_cmds.new_SET_ABSOLUTE_HUMIDITY(a_hum_with_crc))
 
     def write_iaq_baseline(self, baseline):
         baseline_with_crc = self._generate_crc(baseline)
