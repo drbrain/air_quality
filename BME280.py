@@ -163,7 +163,7 @@ class BME280:
         self.t_fine = 0.0
 
     def _load_calibration(self):
-
+        """Load BME280 calibration values for compensated temperature output"""
         self.dig_T1 = self._device.readU16LE(BME280_REGISTER_DIG_T1)
         self.dig_T2 = self._device.readS16LE(BME280_REGISTER_DIG_T2)
         self.dig_T3 = self._device.readS16LE(BME280_REGISTER_DIG_T3)
