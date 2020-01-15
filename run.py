@@ -25,7 +25,6 @@ signal.signal(signal.SIGINT, handler)
 bme280 = BME280(address=0x76)
 
 sgp30 = SGP30(SMBus(1))
-sgp30.init_sgp()
 
 while(True):
     now = datetime.datetime.now().isoformat(timespec='seconds')
@@ -36,10 +35,9 @@ while(True):
 
     a_hum = absolute_humidity(temp, r_hum)
 
-    print("{0} {1:0.2f}℃ {2:0.2f}hPa {3:0.3f}%RH".format(now, temp, pres, hum))
-
+    sgp30.write_absolute_humidity(a_hum)
     eCO2, tVOC = sgp30.read_measurements()
-    print("eCO₂: {}ppm tVOC: {}ppb".format(eCO2, tVOC))
+    print("{0} {1:0.2f}℃ {2:0.2f}hPa {3:0.3f}%RH {4}ppm eCO₂ {5}ppb tVOC".format(now, temp, pres, r_hum, eCO2, tVOC))
 
     time.sleep(1)
 
