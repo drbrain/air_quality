@@ -36,20 +36,25 @@ BASELINE_FILENAME = os.path.expanduser("~/.sgp30_config_data.txt")
 
 class _cmds():
     """container class for mapping between human readable names and the command values used by the sgp"""
-    SGP30Cmd     = namedtuple("SGP30Cmd", ["commands", "replylen", "waittime"])
-    IAQ_INIT     = SGP30Cmd([0x20, 0x03], 0, 10)
-    IAQ_MEASURE  = SGP30Cmd([0x20, 0x08], 6, 12)
-    GET_BASELINE = SGP30Cmd([0x20, 0x15], 6, 120)
-    SET_BASELINE = SGP30Cmd([0x20, 0x1e], 0, 10)
-    SET_HUMIDITY = SGP30Cmd([0x20, 0x61], 0, 10)
-    IAQ_SELFTEST = SGP30Cmd([0x20, 0x32], 3, 520)
-    GET_FEATURES = SGP30Cmd([0x20, 0x2f], 3, 3)
-    GET_SERIAL   = SGP30Cmd([0x36, 0x82], 9, 10)
+    SGP30Cmd = namedtuple("SGP30Cmd", ["commands", "replylen", "waittime"])
+
+    # SGP30 datasheet Version 0.92 – April 2019 Table 10, Feature set 0x22
+    IAQ_INIT                    = SGP30Cmd([0x20, 0x03], 0, 10)
+    MEASURE_IAQ                 = SGP30Cmd([0x20, 0x08], 6, 12)
+    GET_IAQ_BASELINE            = SGP30Cmd([0x20, 0x15], 6, 10)
+    SET_IAQ_BASELINE            = SGP30Cmd([0x20, 0x1e], 0, 10)
+    SET_ABSOLUTE_HUMIDITY       = SGP30Cmd([0x20, 0x61], 0, 10)
+    MEASURE_TEST                = SGP30Cmd([0x20, 0x32], 3, 220)
+    GET_FEATURE_SET             = SGP30Cmd([0x20, 0x2f], 3, 10)
+    MEASURE_RAW                 = SGP30Cmd([0x20, 0x50], 6, 25)
+    GET_TVOC_INCEPTIVE_BASELINE = SGP30Cmd([0x20, 0xb3], 3, 10)
+    SET_TVOC_BASELINE           = SGP30Cmd([0x20, 0x77], 0, 10)
+    GET_SERIAL_ID               = SGP30Cmd([0x36, 0x82], 9, 10)
 
     @classmethod
-    def new_set_baseline(cls, baseline_data):
-        cmd = cls.SET_BASELINE
-        return cls.SGP30Cmd(cmd.commands +baseline_data, cmd.replylen, cmd.waittime)
+    def SET_IAQ_BASELINE(cls, baseline_data):
+        cmd = cls.SET_IAQ_BASELINE
+        return cls.SGP30Cmd(cmd.commands + baseline_data, cmd.replylen, cmd.waittime)
 
 class SGP30():
     def __init__(self,
@@ -110,23 +115,23 @@ class SGP30():
             crc, _ = self._raw_validate_crc(conf)
 
             if len(conf) == 6 and crc == True:
-                self._read_write(_cmds.new_set_baseline(conf))
+                self._read_write(_cmds.SET_IAQ_BASELINE(conf))
                 return True
             else:
                 #print("Failed to load baseline, invalid data")
                 return False
 
     def read_measurements(self):
-        return self._read_write(_cmds.IAQ_MEASURE)
+        return self._read_write(_cmds.MEASURE_IAQ)
 
     def read_selftest(self):
-        return self._read_write(_cmds.IAQ_SELFTEST)
+        return self._read_write(_cmds.MEASURE_TEST)
 
     def read_serial(self):
-        return self._read_write(_cmds.GET_SERIAL)
+        return self._read_write(_cmds.GET_SERIAL_ID)
 
     def read_features(self):
-        return self._read_write(_cmds.GET_FEATURES)
+        return self._read_write(_cmds.GET_FEATURE_SET)
 
     def init_sgp(self):
         self._read_write(_cmds.IAQ_INIT)
