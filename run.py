@@ -7,6 +7,16 @@ import smbus2
 from smbus2 import SMBus
 import time
 
+def absolute_humidity(temperature, relative_humidity):
+    """https://carnotcycle.wordpress.com/2012/08/04/how-to-convert-relative-humidity-to-absolute-humidity/"""
+    """https://esphome.io/cookbook/bme280_environment.html"""
+    t     = temperature
+    r_hum = relative_humidity
+
+    a_hum = (6.112 * math.pow(math.e, (17.67 * t) / (t + 243.5)) * r_hum * 18.01534) / ((273.15 + t) * 8.31447215)
+
+    return a_hum
+
 def handler(signal, frame):
     exit(0)
 
@@ -20,13 +30,13 @@ sgp30.init_sgp()
 while(True):
     now = datetime.datetime.now().isoformat(timespec='seconds')
 
-    temp = bme280.read_temperature()
-    pres = bme280.read_pressure() / 1000
-    hum  = bme280.read_humidity()
+    temp  = bme280.read_temperature()
+    pres  = bme280.read_pressure() / 1000
+    r_hum = bme280.read_humidity()
 
-    absolute_humidity = 216.7 * (((hum / 100) * 6.112 * math.e**((17.62 * temp) / (243.5 + temp))) / (273.15 + temp))
+    a_hum = absolute_humidity(temp, r_hum)
 
-    print("absolute humidity: {0}".format(absolute_humidity))
+    print("absolute humidity: {0}".format(a_hum)
 
     print("{0} {1:0.2f}℃ {2:0.2f}hPa {3:0.3f}%RH".format(now, temp, pres, hum))
 
