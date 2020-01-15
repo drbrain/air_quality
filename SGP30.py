@@ -23,7 +23,7 @@
 # SOFTWARE.
 
 import smbus2
-from smbus2 import SMBusWrapper, SMBus, i2c_msg
+from smbus2 import SMBus, i2c_msg
 from collections import namedtuple
 from functools import partial
 from time import sleep, asctime, time
