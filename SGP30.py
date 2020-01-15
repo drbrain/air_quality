@@ -80,6 +80,34 @@ class SGP30():
             tvoc_baseline = self.read_tvoc_inceptive_baseline()
             self.write_tvoc_baseline(tvoc_baseline)
 
+    def iaq_init(self):
+        self._read_write(_cmds.IAQ_INIT)
+
+    def read_features(self):
+        return self._read_write(_cmds.GET_FEATURE_SET)[0]
+
+    def read_iaq_baseline(self):
+        return self._read_write(_cmds.GET_IAQ_BASELINE)
+
+    def read_tvoc_inceptive_baseline(self):
+        return self._read_write(_cmds.GET_TVOC_INCEPTIVE_BASELINE)
+
+    def read_measurements(self):
+        return self._read_write(_cmds.MEASURE_IAQ)
+
+    def read_serial(self):
+        return self._read_write(_cmds.GET_SERIAL_ID)
+
+    def write_iaq_baseline(self, baseline):
+        baseline_with_crc = self._generate_crc(baseline)
+
+        self._read_write(_cmds.new_SET_IAQ_BASELINE(baseline_with_crc))
+
+    def write_tvoc_baseline(self, baseline):
+        baseline_with_crc = self._generate_crc(baseline)
+
+        self._read_write(_cmds.new_SET_TVOC_BASELINE(baseline_with_crc))
+
     def _generate_crc(self, data):
         def writable_value_with_crc(value):
             msb = value >> 8
@@ -92,12 +120,6 @@ class SGP30():
         data_with_crc = [item for sublist in data_with_crc for item in sublist]
 
         return data_with_crc
-
-    def _validate_crc(s, r):
-        a = list(zip(r[0::3], r[1::3]))
-        crc = r[2::3] == [Crc8().hash(i) for i in a ]
-
-        return crc, a
 
     def _read_write(self, cmd):
         write = i2c_msg.write(self._device_addr, cmd.commands)
@@ -118,36 +140,11 @@ class SGP30():
 
             return answer
 
-    def read_tvoc_inceptive_baseline(self):
-        return self._read_write(_cmds.GET_TVOC_INCEPTIVE_BASELINE)
+    def _validate_crc(s, r):
+        a = list(zip(r[0::3], r[1::3]))
+        crc = r[2::3] == [Crc8().hash(i) for i in a ]
 
-    def write_tvoc_baseline(self, baseline):
-        baseline_with_crc = self._generate_crc(baseline)
-
-        self._read_write(_cmds.new_SET_TVOC_BASELINE(baseline_with_crc))
-
-    def read_iaq_baseline(self):
-        return self._read_write(_cmds.GET_IAQ_BASELINE)
-
-    def write_iaq_baseline(self, baseline):
-        baseline_with_crc = self._generate_crc(baseline)
-
-        self._read_write(_cmds.new_SET_IAQ_BASELINE(baseline_with_crc))
-
-    def read_measurements(self):
-        return self._read_write(_cmds.MEASURE_IAQ)
-
-    def read_selftest(self):
-        return self._read_write(_cmds.MEASURE_TEST)
-
-    def read_serial(self):
-        return self._read_write(_cmds.GET_SERIAL_ID)
-
-    def read_features(self):
-        return self._read_write(_cmds.GET_FEATURE_SET)[0]
-
-    def iaq_init(self):
-        self._read_write(_cmds.IAQ_INIT)
+        return crc, a
 
 class Crc8:
     def __init__(s):
@@ -155,11 +152,11 @@ class Crc8:
 
     def hash(s, int_list):
         for i in int_list:
-            s.addVal(i)
+            s._add_val(i)
 
         return s.crc
 
-    def addVal(s, n):
+    def _add_val(s, n):
         crc = s.crc
 
         for bit in range(0, 8):
