@@ -1,5 +1,4 @@
 from BME280 import BME280
-import Adafruit_GPIO.I2C as I2C
 import datetime
 import math
 import signal
@@ -10,9 +9,7 @@ def handler(signal, frame):
 
 signal.signal(signal.SIGINT, handler)
 
-i2c = I2C
-
-bme280 = BME280(i2c=i2c, address=0x76)
+bme280 = BME280(address=0x76)
 
 while(True):
     now = datetime.datetime.now().isoformat()
