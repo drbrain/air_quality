@@ -157,7 +157,7 @@ class Crc8:
         return s.crc
 
 def main():
-    with SMBusWrapper(1) as bus:
+    with SMBus(1) as bus:
         sgp = SGP30(bus, baseline_filename=BASELINE_FILENAME+".TESTING")
 
         print("feature set: 0x{0:02x}".format(*sgp.read_features()))
@@ -178,8 +178,6 @@ def main():
             print("eCO₂: {} tVOC: {}".format(eCO2, tVOC))
 
             sleep(1.0)
-
-    bus.close()
 
 if __name__ == "__main__":
     main()
