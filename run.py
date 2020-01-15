@@ -18,7 +18,7 @@ sgp30 = SGP30(SMBus(1))
 sgp30.init_sgp()
 
 while(True):
-    now = datetime.datetime.now().isoformat()
+    now = datetime.datetime.now().isoformat(timespec='seconds')
 
     temp = bme280.read_temperature()
     pres = bme280.read_pressure() / 1000
