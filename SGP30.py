@@ -52,9 +52,12 @@ class _cmds():
     GET_SERIAL_ID               = SGP30Cmd([0x36, 0x82], 9, 10)
 
     @classmethod
-    def SET_IAQ_BASELINE(cls, baseline_data):
+    def new_SET_IAQ_BASELINE(cls, data_with_crc):
         cmd = cls.SET_IAQ_BASELINE
-        return cls.SGP30Cmd(cmd.commands + baseline_data, cmd.replylen, cmd.waittime)
+
+        send = cmd.commands + data_with_crc
+
+        return cls.SGP30Cmd(send, cmd.replylen, cmd.waittime)
 
 class SGP30():
     def __init__(self,
@@ -92,34 +95,26 @@ class SGP30():
 
             return answer
 
-    def store_baseline(self):
-        with open(self._baseline_filename, "w") as conf:
-            baseline = self._read_write(_cmds.GET_BASELINE)
+    def read_iaq_baseline(self):
+        return self._read_write(_cmds.GET_IAQ_BASELINE)
 
-            if baseline.crc_ok == True:
-                json.dump(baseline.raw, conf)
-                return True
-            else:
-                #print("Ignoring baseline due to invalid CRC")
-                return False
+    def write_iaq_baseline(self, baseline):
+        eCO2_baseline, tVOC_baseline = baseline
 
-    def try_set_baseline(self):
-        try:
-            with open(self._baseline_filename, "r") as conf:
-                conf = json.load(conf)
-        except IOError:
-            pass
-        except ValueError:
-            pass
-        else:
-            crc, _ = self._raw_validate_crc(conf)
+        eCO2_b_msb = eCO2_baseline >> 8
+        eCO2_b_lsb = eCO2_baseline & 0xFF
+        eCO2_crc = Crc8().hash([eCO2_b_msb, eCO2_b_lsb])
 
-            if len(conf) == 6 and crc == True:
-                self._read_write(_cmds.SET_IAQ_BASELINE(conf))
-                return True
-            else:
-                #print("Failed to load baseline, invalid data")
-                return False
+        tVOC_b_msb = tVOC_baseline >> 8
+        tVOC_b_lsb = tVOC_baseline & 0xFF
+        tVOC_crc = Crc8().hash([tVOC_b_msb, tVOC_b_lsb])
+
+        baseline_with_crc = [
+            eCO2_b_msb, eCO2_b_lsb, eCO2_crc,
+            tVOC_b_msb, tVOC_b_lsb, tVOC_crc,
+        ]
+
+        self._read_write(_cmds.new_SET_IAQ_BASELINE(baseline_with_crc))
 
     def read_measurements(self):
         return self._read_write(_cmds.MEASURE_IAQ)
