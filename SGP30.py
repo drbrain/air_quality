@@ -133,19 +133,6 @@ class SGP30():
     def init_sgp(self):
         self.read_write(_cmds.IAQ_INIT)
 
-    def i2c_geral_call(self):
-        """This attempts to reset _ALL_ devices on the i2c buss
-
-        This command issues the i2c-general call RW command that should result
-        in all devices aborting any read/write operations and starting to listen
-        for new i2c-commands.
-
-        This will usually un-stick the SGP30, but might reset or otherwise
-        affect any device on the bus.
-        """
-        self._bus.write_byte(0, 0x06)
-        sleep(.1)
-
 class Crc8:
     def __init__(s):
         s.crc = 255
@@ -174,9 +161,6 @@ class Crc8:
 def main():
     with SMBusWrapper(1) as bus:
         sgp = SGP30(bus, baseline_filename=BASELINE_FILENAME+".TESTING")
-
-        print("resetting all i2c devices")
-        sgp.i2c_geral_call()
 
         print("feature set: 0x{0:02x}".format(*sgp.read_features().data))
         print("serial: 0x{0:04x}{1:04x}{2:04x}".format(*sgp.read_serial().data))
