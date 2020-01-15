@@ -59,6 +59,14 @@ class _cmds():
 
         return cls.SGP30Cmd(send, cmd.replylen, cmd.waittime)
 
+    @classmethod
+    def new_SET_TVOC_BASELINE(cls, data_with_crc):
+        cmd = cls.SET_TVOC_BASELINE
+
+        send = cmd.commands + data_with_crc
+
+        return cls.SGP30Cmd(send, cmd.replylen, cmd.waittime)
+
 class SGP30():
     def __init__(self,
                  bus,
@@ -70,7 +78,20 @@ class SGP30():
         self._last_save_time = time()
         self._baseline_filename = baseline_filename
 
-    def _raw_validate_crc(s, r):
+    def _generate_crc(self, data):
+        def writable_value_with_crc(value):
+            msb = value >> 8
+            lsb = value & 0xFF
+            crc = Crc8().hash([msb, lsb])
+
+            return [msb, lsb, crc]
+
+        data_with_crc = list(map(writable_value_with_crc, data))
+        data_with_crc = [item for sublist in data_with_crc for item in sublist]
+
+        return data_with_crc
+
+    def _validate_crc(s, r):
         a = list(zip(r[0::3], r[1::3]))
         crc = r[2::3] == [Crc8().hash(i) for i in a ]
 
@@ -90,29 +111,24 @@ class SGP30():
             self._bus.i2c_rdwr(read)
             r = list(read)
 
-            crc_ok, a = self._raw_validate_crc(r)
+            crc_ok, a = self._validate_crc(r)
             answer = [i<<8 | j for i, j in a]
 
             return answer
+
+    def read_tvoc_inceptive_baseline(self):
+        return self._read_write(_cmds.GET_TVOC_INCEPTIVE_BASELINE)
+
+    def write_tvoc_baseline(self, baseline):
+        baseline_with_crc = self._generate_crc(baseline)
+
+        self._read_write(_cmds.new_SET_TVOC_BASELINE(baseline_with_crc))
 
     def read_iaq_baseline(self):
         return self._read_write(_cmds.GET_IAQ_BASELINE)
 
     def write_iaq_baseline(self, baseline):
-        eCO2_baseline, tVOC_baseline = baseline
-
-        eCO2_b_msb = eCO2_baseline >> 8
-        eCO2_b_lsb = eCO2_baseline & 0xFF
-        eCO2_crc = Crc8().hash([eCO2_b_msb, eCO2_b_lsb])
-
-        tVOC_b_msb = tVOC_baseline >> 8
-        tVOC_b_lsb = tVOC_baseline & 0xFF
-        tVOC_crc = Crc8().hash([tVOC_b_msb, tVOC_b_lsb])
-
-        baseline_with_crc = [
-            eCO2_b_msb, eCO2_b_lsb, eCO2_crc,
-            tVOC_b_msb, tVOC_b_lsb, tVOC_crc,
-        ]
+        baseline_with_crc = self._generate_crc(baseline)
 
         self._read_write(_cmds.new_SET_IAQ_BASELINE(baseline_with_crc))
 
