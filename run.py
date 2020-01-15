@@ -36,8 +36,6 @@ while(True):
 
     a_hum = absolute_humidity(temp, r_hum)
 
-    print("absolute humidity: {0}".format(a_hum)
-
     print("{0} {1:0.2f}℃ {2:0.2f}hPa {3:0.3f}%RH".format(now, temp, pres, hum))
 
     eCO2, tVOC = sgp30.read_measurements()
