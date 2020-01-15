@@ -68,7 +68,7 @@ class SGP30():
 
         return crc, a
 
-    def read_write(self, cmd):
+    def _read_write(self, cmd):
         write = i2c_msg.write(self._device_addr, cmd.commands)
 
         if cmd.replylen <= 0 :
@@ -89,7 +89,7 @@ class SGP30():
 
     def store_baseline(self):
         with open(self._baseline_filename, "w") as conf:
-            baseline = self.read_write(_cmds.GET_BASELINE)
+            baseline = self._read_write(_cmds.GET_BASELINE)
 
             if baseline.crc_ok == True:
                 json.dump(baseline.raw, conf)
@@ -110,26 +110,26 @@ class SGP30():
             crc, _ = self._raw_validate_crc(conf)
 
             if len(conf) == 6 and crc == True:
-                self.read_write(_cmds.new_set_baseline(conf))
+                self._read_write(_cmds.new_set_baseline(conf))
                 return True
             else:
                 #print("Failed to load baseline, invalid data")
                 return False
 
     def read_measurements(self):
-        return self.read_write(_cmds.IAQ_MEASURE)
+        return self._read_write(_cmds.IAQ_MEASURE)
 
     def read_selftest(self):
-        return self.read_write(_cmds.IAQ_SELFTEST)
+        return self._read_write(_cmds.IAQ_SELFTEST)
 
     def read_serial(self):
-        return self.read_write(_cmds.GET_SERIAL)
+        return self._read_write(_cmds.GET_SERIAL)
 
     def read_features(self):
-        return self.read_write(_cmds.GET_FEATURES)
+        return self._read_write(_cmds.GET_FEATURES)
 
     def init_sgp(self):
-        self.read_write(_cmds.IAQ_INIT)
+        self._read_write(_cmds.IAQ_INIT)
 
 class Crc8:
     def __init__(s):
