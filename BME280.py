@@ -320,3 +320,15 @@ class BME280:
         dewpoint_f = dewpoint_c * 1.8 + 32
 
         return dewpoint_f
+
+if __name__ == '__main__':
+    bme280 = BME280(address=0x76)
+
+    while(True):
+        temp  = bme280.read_temperature()
+        pres  = bme280.read_pressure() / 1000
+        r_hum = bme280.read_humidity()
+
+        print("{0:0.2f}℃ {1:0.2f}hPa {2:0.3f}%RH".format(temp, pres, r_hum))
+
+        time.sleep(1)
