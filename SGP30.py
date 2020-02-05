@@ -189,7 +189,7 @@ def main():
     with SMBus(1) as bus:
         sgp = SGP30(bus)
 
-        print("feature set: 0x{0:02x}".format(*sgp.read_features()))
+        print("feature set: 0x{0:02x}".format(sgp.read_features()))
         print("serial: 0x{0:04x}{1:04x}{2:04x}".format(*sgp.read_serial()))
 
         while(True):
