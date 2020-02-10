@@ -99,7 +99,7 @@ class SGP30
 
       sleep max_wait / 1000.0
 
-      message = I2C::Message.read @dev, command, read_length
+      message = I2C::Message.read @dev, read_length, command
       result = message.buffer.to_s read_length
       data = extract_data result
       data.unpack format

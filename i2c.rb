@@ -97,9 +97,9 @@ class I2C::Message
 
   attr_writer :device
 
-  def self.read device, data, length
+  def self.read device, length, data = nil
     buffer = Fiddle::Pointer.malloc length
-    buffer[0, data.bytesize] = data
+    buffer[0, data.bytesize] = data if data
 
     message = malloc
 
